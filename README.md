@@ -2,6 +2,10 @@
 
 This repository contains everything you need to create your own Jellyfin media server with Sonarr, Radarr, Jellyseerr, Prowlarr, Jackett, qBittorrent, and Gluetun (VPN) in a Docker Compose setup.
 
+> [!WARNING]  
+> Even though the instructions are fairly fleshed out, they're not at the point where everything is covered or I can guarantee everything is 100% correct. The main part still not covered is the hardware encoding for jellyfin. As it is it should work on AMD cards, but might require some tinkering with the compose file. For NVIDIA see the repo this was forked from.
+
+
 ## **Table of contents**
 
 - [**tailnet-arr-stack**](#tailnet-arr-stack)
