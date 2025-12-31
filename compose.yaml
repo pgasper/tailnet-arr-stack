@@ -1,38 +1,51 @@
 ---
-version: "3.3"
 services:
-  nordvpn:
+  gluetun:
     container_name: GlueTun-VPN
     image: qmcgaw/gluetun
     cap_add:
       - NET_ADMIN
     ports:
       - 8080:8080
-      - 51420:51420
-      - 51420:51420/udp
+      - 51820:51820
+      - 51820:51820/udp
+      - 46931:46931
+      - 46931:46931/udp
     environment:
-      - VPN_SERVICE_PROVIDER=nordvpn
-      - OPENVPN_USER=${OPENVPN_USER}
-      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
-      - SERVER_REGIONS=${SERVER_REGIONS}
-      - VPN_TYPE=openvpn
+      - VPN_SERVICE_PROVIDER=custom
+      - VPN_TYPE=wireguard
+      - VPN_ENDPOINT_IP=${ENDPOINT_IP}
+      - WIREGUARD_ADDRESSES=${WIREGUARD_ADDR}
+      - VPN_ENDPOINT_PORT=${ENDPOINT_PORT}
+      - VPN_DNS_ADDRESS=${DNS_ADDRESS}
+      - WIREGUARD_PUBLIC_KEY=${PUBLIC_KEY}
+      - WIREGUARD_PRIVATE_KEY=${PRIVATE_KEY}
+      - VPN_PORT_FORWARDING=on
+      - VPN_PORT_FORWARDING_PROVIDER=protonvpn
+      - VPN_PORT_FORWARDING_STATUS_FILE=/tmp/gluetun/forwarded_port
+      - TZ=${TZ}
+      - UPDATER_PERIOD=24h
     restart: always
+    volumes:
+      - ${COMMON_PATH}:${COMMON_PATH}
+      - ${COMMON_PATH}/gluetun:/tmp/gluetun
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
-    network_mode: service:nordvpn
+    network_mode: service:gluetun
     container_name: qbittorrent
     depends_on:
-      - nordvpn
+      - gluetun
     environment:
       - WEBUI_PORT=8080
-      - PUID=0
-      - PGID=0
+      - PUID=1000
+      - PGID=1000
       - TZ=${TZ}
       #- DOCKER_MODS=ghcr.io/gabe565/linuxserver-mod-vuetorrent
     volumes:
       - ${COMMON_PATH}:${COMMON_PATH}
       - ${COMMON_PATH}/configs/qbittorrent:/config
       - ${COMMON_PATH}/qbittorrent/downloads:/downloads
+      - /mnt/hdd/TV:/mnt/hdd/TV
     restart: unless-stopped
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -47,36 +60,12 @@ services:
     ports:
       - 8191:8191
     restart: unless-stopped
-  prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=${TZ}
-    volumes:
-      - ${COMMON_PATH}/configs/prowlarr:/config
-    ports:
-      - 9696:9696
-    restart: unless-stopped
-  jackett:
-    image: lscr.io/linuxserver/jackett:latest
-    container_name: jackett
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=${TZ}
-    volumes:
-      - ${COMMON_PATH}/configs/jackett:/config
-    ports:
-      - 9117:9117
-    restart: unless-stopped
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     environment:
-      - PUID=0
-      - PGID=0
+      - PUID=1000
+      - PGID=1000
       - TZ=${TZ}
     volumes:
       - ${COMMON_PATH}:${COMMON_PATH}
@@ -86,12 +75,24 @@ services:
     ports:
       - 8989:8989
     restart: unless-stopped
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - ${COMMON_PATH}/configs/prowlarr:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     environment:
-      - PUID=0
-      - PGID=0
+      - PUID=1000
+      - PGID=1000
       - TZ=${TZ}
     volumes:
       - ${COMMON_PATH}:${COMMON_PATH}
@@ -105,10 +106,18 @@ services:
     image: lscr.io/linuxserver/jellyfin:latest
     container_name: jellyfin
     environment:
-      - PUID=0
-      - PGID=0
+      - PUID=1000              # use your user’s UID, not 0
+      - PGID=1000              # use your user’s GID
       - TZ=${TZ}
-      - NVIDIA_VISIBLE_DEVICES=all
+      # Pick one (or leave both and select in UI):
+      - LIBVA_DRIVER_NAME=iHD        # Intel QSV (i7-7700)
+      - LIBVA_DRIVER_NAME=radeonsi   # AMD
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128   # Intel iGPU render node
+      - /dev/dri/renderD129:/dev/dri/renderD129   # AMD dGPU render node (adjust if different)
+    group_add:
+      - "984" #video
+      - "988" #render 
     ports:
       - 8096:8096
       - 8920:8920
@@ -133,3 +142,29 @@ services:
     volumes:
       - ${COMMON_PATH}/configs/jellyseerr:/app/config
     restart: unless-stopped
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - ${COMMON_PATH}/configs/bazarr:/config
+      - ${COMMON_PATH}/sonarr/tv:/tv
+      - ${COMMON_PATH}/radarr/movies:/movies
+    ports:
+      - 6767:6767
+    restart: unless-stopped
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${COMMON_PATH}/configs/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ${COMMON_PATH}/configs/caddy/data:/data
+      - ${COMMON_PATH}/configs/caddy/config:/config
