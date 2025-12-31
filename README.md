@@ -10,20 +10,17 @@ This repository contains everything you need to create your own Jellyfin media s
     - [**Jellyseerr**](#jellyseerr)
     - [**Sonarr**](#sonarr)
     - [**Radarr**](#radarr)
-    - [**Jackett**](#jackett)
     - [**Flaresolverr**](#flaresolverr)
     - [**Prowlarr**](#prowlarr)
     - [**qBittorrent**](#qbittorrent)
     - [**Gluetun (VPN)**](#gluetun-vpn)
 - [**Prerequisites**](#prerequisites)
   - [**Docker**](#docker)
-    - [**Using Docker Compose :**](#using-docker-compose-)
 - [**VPN**](#vpn)
   - [**PROTON**](#proton)
   - [**Troubleshoot VPN**](#troubleshoot-vpn)
 - [**Installation**](#installation)
-  - [**1. Basic Installation**](#1-basic-installation)
-  - [**4. Installation with VPN**](#4-installation-with-vpn-no-nvidia)
+  - [**4. Installation with VPN**](#4-installation-with-vpn)
 - [**Accessing Applications**](#accessing-applications)
 - [**Configuration Guide for Web Interfaces Only**](#configuration-guide-for-web-interfaces-only)
   - [**qBittorrent**](#qbittorrent-1)
@@ -54,9 +51,6 @@ This repository contains everything you need to create your own Jellyfin media s
 
 This repository allows you to create your own Jellyfin media server with all the necessary tools to manage your movies, TV shows, music, and eBooks. It also includes tools to automate the downloading of new content and to protect your privacy using a VPN.
 
-> [!IMPORTANT]  
-> To use Docker Compose, make sure Docker is installed on your system.
-
 ---
 
 ### **Jellyfin**
@@ -74,10 +68,6 @@ This repository allows you to create your own Jellyfin media server with all the
 ### **Radarr**
 
 [Radarr](https://radarr.video/) is movie management software that allows you to search, download, and manage your favorite movies automatically. It works with many types of trackers and torrent clients and supports automatic subtitle downloading.
-
-### **Jackett**
-
-[Jackett](https://github.com/Jackett/Jackett) is a proxy software for torrent trackers that allows you to search for torrent files on many trackers from one place. It works with many types of torrent clients and supports authentication and advanced searching.
 
 ### **Flaresolverr**
 
@@ -97,11 +87,6 @@ This repository allows you to create your own Jellyfin media server with all the
 
 ---
 
-# **Prerequisites**
-
-> [!NOTE]  
-> This service requires a machine with at least 4 CPU cores and 8 GB of RAM. 
-
 ## **Docker**
 
 To install Docker on your system, follow the install instructions on docker website for your system.
@@ -116,7 +101,7 @@ To install Docker on your system, follow the install instructions on docker webs
 
 ### **Using Docker Compose :**
 
-To use Docker Compose with this repository, you first need to choose whether you want to use the version with VPN or without VPN. Then, navigate to the corresponding directory (with-vpn or without-vpn) and run the following command :
+To bring up the stack:
 
 ```bash
 docker-compose up -d
@@ -140,22 +125,13 @@ Go to [Protont VPN](https://account.protonvpn.com/downloads) website.
 
 1. Go to Download :
 
-2. Configure your VPN manually with an OS name to use, and make sure to enable NAT-PMP. Finally, select the desired country :
+2. Configure your VPN connection, make sure to enable NAT-PMP, disable VPN accelerator and set "Level for NetShield blocker filtering" to None. Finally, select the desired country or just allow Proton to select it for you.
 
-3. You can now gather your information for the Gluetun container setup :
+3. You can now add the VPN data into the .env file.
 
 > [!CAUTION]  
 > Make sure you have either downloaded the file or copied its content into a text file, as some information will no longer be available after you click "Close".
 
-## **Troubleshoot VPN** 
-
-Once the Docker is launched, you can test your VPN with the following command :
-
-```bash
-docker exec qbittorrent curl -s https://api.ipify.org/
-# Result
-94.101.115.63
-```
 
 # **Installation**
 
@@ -172,13 +148,13 @@ Before proceeding, navigate to the `.env` file located in the root directory and
 
 ```yaml
 # BASE
-COMMON_PATH=/some/path Set this to some path on your PC/Server where you want to save config files and downloads from qbit
+COMMON_PATH=/some/path  #Set this to some path on your PC/Server where you want to save config files for all the services and downloads from qbit. This is also where your hardlinks for your library will be. Sonarr and radarr will create hardlinks of qbittorrent downloads inside their folder in this directory. Ofcourse feel free to change the compose file to point each service's files to be where you want them to be.
 
 TZ=Europe/Ljubljana
 
 # Uncomment the lines below to enable VPN
 
-# PROTON VPN 
+# PROTON VPN (Leave this line as comment)
 # ENDPOINT_IP=PEER_ENDPOINT_IP  # The endpoint IP address of the VPN server
 # WIREGUARD_ADDR=Interface_Address  # The WireGuard interface address
 # ENDPOINT_PORT=51820  # Default port is 51820, but confirm if different
@@ -191,9 +167,6 @@ TZ=Europe/Ljubljana
 > Make sure you uncomment and configure the settings according to the VPN service you're using. This step is essential for establishing a proper VPN connection.
 
 ## **1. Installation with VPN**
-
-> [!WARNING]  
-> If you use this method, fill in the `.env` file located.
 
 Standard installation with a `VPN`:
 
@@ -210,7 +183,7 @@ docker compose up -d
 Once the applications are deployed, you can access them using the following addresses :
 
 > [!IMPORTANT]  
-> Replace `localhost` with the IP address of your machine or remote server if needed.
+> Replace `localhost` with the IP address of your machine or remote server if needed. If using a tailnet (either through self hosted Headscale or Tailscale) you can use the tailnet ip of the machine running the services. For example your machine running the docker containers could be at tailnet ip 100.64.0.1 so you would use that IP and the corresponding service's port.
 
 
 * Jellyfin : http://localhost:8096
@@ -221,7 +194,7 @@ Once the applications are deployed, you can access them using the following addr
 * Prowlarr : http://localhost:9696
 * qBittorrent : http://localhost:8080
 
-Gluetun (Nord VPN) will be automatically configured to be used with the applications.
+Gluetun will be automatically configured to be used with the applications.
 
 # **Configuration Guide for Web Interfaces Only**
 
@@ -236,7 +209,7 @@ Gluetun (Nord VPN) will be automatically configured to be used with the applicat
    - **Username**: `admin`
    - **Password**: `adminadmin` or get password with docker logs qbittorrent
 
-   *Note: The default credentials may have changed, please check the documentation for updates on this. In most cases, qBittorrent Web UI will generate a temporary password when the container is started. To view this password, check the logs for this container with the command: `docker logs qbittorrent`*
+   *Note: qBittorrent Web UI will generate a temporary password when the container is first created and started. To view this password, check the logs for this container with the command: `docker logs qbittorrent`*
 
 1. Once logged in, click the gear icon to go to **Options**.
 2. Under the **Downloads** tab, configure the backup settings as follows:
@@ -278,17 +251,17 @@ Gluetun (Nord VPN) will be automatically configured to be used with the applicat
 2. Click **+** under **Download Clients**, then select **qBittorrent** from the **Add Download Client** window.
 3. Fill in the fields as follows:
    - **Name**: `qBittorrent` (or another name of your choice)
-   - **Host**: `qbittorrent`
+   - **Host**: `GlueTun-VPN`
    - **Username**: `admin`
    - **Password**: `adminadmin` (change it if you've modified it in qBittorrent)
    - **Category**: `radarr` (this should match the category set in qBittorrent)
 4. Click **Test**. If you see a checkmark, it means the connection is working; if not, there is an error.
 5. Click **Save**.
 
-_Note: if entering `qbittorrent` as the Host does not work, try entering the IP address instead (ex: `192.168.x.x`)_
+_Note: qBittorrent is "behind" GlueTun's "GlueTun-VPN" network so to access it you need to use that for host.
 
 > [!WARNING]
-> On new installations, Radarr may complain that the `/downloads/radarr` directory does not exist inside the container (this is generally flagged as an error by Radarr in  **System** > **Status**). To fix this, simply move into the directory `/COMMON_PATH/qbittorrent/downloads` and manually create the `radarr` directory. Then, simply delete qBittorrent from Radarr and re-add it -  you should see the error disappear.
+> On new installations, Radarr may complain that the `/downloads/radarr` directory does not exist inside ${COMMON_PATH}/qbittorrent/downloads (this is generally flagged as an error by Radarr in  **System** > **Status**). To fix this, simply move into the directory `/COMMON_PATH/qbittorrent/downloads` and manually create the `radarr` directory. Since sonarr will likely complain the same also create a sonarr directory. Then, simply delete qBittorrent from Radarr and re-add it -  you should see the error disappear.
 
 **[`^        back to top        ^`](#table-of-contents)**
 
@@ -302,7 +275,7 @@ _Note: if entering `qbittorrent` as the Host does not work, try entering the IP 
 2. Click **Add Root Folder**, add the path `/tv`, and click **OK**.
 3. Click **Show Advanced**, scroll down to **Importing**, and enable **Use Hardlinks instead of Copy**.
 
-_Note: if entering `qbittorrent` as the Host does not work, try entering the IP address instead (ex: `192.168.x.x`)_
+_Note: qBittorrent is "behind" GlueTun's "GlueTun-VPN" network so to access it you need to use that for host.
 
 ### **Download Clients**
 
@@ -310,7 +283,7 @@ _Note: if entering `qbittorrent` as the Host does not work, try entering the IP 
 2. Click **+** under **Download Clients**, then select **qBittorrent**.
 3. Fill in the fields as follows:
    - **Name**: `qBittorrent` (or another name of your choice)
-   - **Host**: `qbittorrent`
+   - **Host**: `GlueTun-VPN`
    - **Username**: `admin`
    - **Password**: `adminadmin` (change it if you've modified it in qBittorrent)
    - **Category**: `sonarr` (this should match the category set in qBittorrent)
@@ -373,7 +346,7 @@ _Note: if entering `qbittorrent` as the Host does not work, try entering the IP 
 
 ### **Initial Setup**
 
-1. Open the Web UI by going to the **DOCKER** tab, click the app logo for Jellyfin, and select **WebUI**.
+1. Open the Web UI by going to http://localhost:8096 or whatever the IP of the machine hosting the container is.
 2. Select a preferred display language (or use the default English). Click **Next** ➝.
 3. Create an administrator account, fill out the credentials as desired, and click **Next** ➝.
 4. Click **Add Media Library** and fill in the following:
