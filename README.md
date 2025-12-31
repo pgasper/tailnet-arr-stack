@@ -14,13 +14,10 @@ This repository contains everything you need to create your own Jellyfin media s
     - [**Prowlarr**](#prowlarr)
     - [**qBittorrent**](#qbittorrent)
     - [**Gluetun (VPN)**](#gluetun-vpn)
-- [**Prerequisites**](#prerequisites)
   - [**Docker**](#docker)
-- [**VPN**](#vpn)
+- [**INSTALLATION**](#installation)
   - [**PROTON**](#proton)
-  - [**Troubleshoot VPN**](#troubleshoot-vpn)
 - [**Installation**](#installation)
-  - [**4. Installation with VPN**](#4-installation-with-vpn)
 - [**Accessing Applications**](#accessing-applications)
 - [**Configuration Guide for Web Interfaces Only**](#configuration-guide-for-web-interfaces-only)
   - [**qBittorrent**](#qbittorrent-1)
@@ -28,11 +25,9 @@ This repository contains everything you need to create your own Jellyfin media s
   - [**Radarr**](#radarr-1)
     - [**Media Management**](#media-management)
     - [**Download Clients**](#download-clients)
-    - [**Indexer Jackett (Optional)**](#indexer-jackett-optional)
   - [**Sonarr**](#sonarr-1)
     - [**Media Management**](#media-management-1)
     - [**Download Clients**](#download-clients-1)
-    - [**Indexer Jackett (Optional)**](#indexer-jackett-optional-1)
   - [**Prowlarr**](#prowlarr-1)
     - [**Configure Torrent Indexers**](#configure-torrent-indexers)
     - [**Configure FlareSolverr**](#configure-flaresolverr)
@@ -118,10 +113,12 @@ docker-compose down
 For setup with Nvidia:
 https://www.youtube.com/watch?v=OF_5EKNX0Eg
 
-# **VPN**
+# **INSTALLATION**
+To bring up the stack properly follow the instruction from now on.
+
 ## **PROTON**
 
-Go to [Protont VPN](https://account.protonvpn.com/downloads) website.
+Go to [Proton VPN](https://account.protonvpn.com/downloads) website.
 
 1. Go to Download :
 
@@ -133,9 +130,7 @@ Go to [Protont VPN](https://account.protonvpn.com/downloads) website.
 > Make sure you have either downloaded the file or copied its content into a text file, as some information will no longer be available after you click "Close".
 
 
-# **Installation**
-
-First, clone the repository :
+Clone the repository :
 
 ```bash
 git clone https://github.com/pgasper/tailnet-arr-stack
@@ -166,11 +161,9 @@ TZ=Europe/Ljubljana
 > [!WARNING]  
 > Make sure you uncomment and configure the settings according to the VPN service you're using. This step is essential for establishing a proper VPN connection.
 
-## **1. Installation with VPN**
+## **Bring up the containers**
 
-Standard installation with a `VPN`:
-
-To start the installation, execute :
+To bring up the containers, execute :
 
 ```bash
 docker compose up -d
@@ -217,8 +210,13 @@ Gluetun will be automatically configured to be used with the applications.
    - **When Torrent Category changed**: `Relocate torrent`
    - **When Default Save Path changed**: `Relocate affected torrents`
    - **When Category Save Path changed**: `Relocate affected torrents`
-   - **Default Save Path**: `/downloads` 
-3. Click **SAVE**.
+   - **Default Save Path**: `/downloads`
+3. On machine running docker execute the command below and input the port into qbittorrent otherwise upload will not work. In Qbit go Tools->Options->Connections tab.
+   Inside the Listening port section type in the port given by the docker comand and uncheck "Use UPnP..." and don't forget to save. 
+```bash
+docker exec GlueTun-VPN cat /tmp/gluetun/forwarded_port
+```
+4. Click **SAVE**.
 
 ### **Category Configuration**
 
