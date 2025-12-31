@@ -104,17 +104,7 @@ This repository allows you to create your own Jellyfin media server with all the
 
 ## **Docker**
 
-To install Docker on your system, use the following commands:
-
-Download the script with this command:
-```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-```
-
-Then run the script with this command:
-```bash
-sh get-docker.sh
-```
+To install Docker on your system, follow the install instructions on docker website for your system.
 
 > [!TIP]
 > I recommend giving Docker administrative rights to your user:
